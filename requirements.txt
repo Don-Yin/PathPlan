@@ -1,0 +1,9 @@
+scikit-image~=0.19.3
+plotly~=5.13.0
+pydicom
+SimpleITK
+numpy
+vtk
+pandas
+numba
+tqdm
