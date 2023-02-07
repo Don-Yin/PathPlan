@@ -18,19 +18,29 @@ def frame_args(duration):
     }
 
 
-def show_volume(volume: sitk, entries: np.ndarray = None, targets: np.ndarray = None, lines: list[pandas.DataFrame] = None):
-
+def show_volume(
+    volume: sitk,
+    entries: np.ndarray = None,
+    targets: np.ndarray = None,
+    valid_entries_targets: list[tuple] = None,
+    meshes: list[tuple[np.ndarray, np.ndarray]] = None,
+):
     """
     Show volume with plotly
     :param volume: 3D numpy array
     :param entries: 2D numpy array containing the coordinates of the entries
     :param targets: 2D numpy array containing the coordinates of the targets
+    :param valid_entries_targets: list of tuples containing the indices of the valid entries and targets; used for drawing lines
     :return: None
     """
-    # volumes = [sitk.GetArrayFromImage(i) for i in images_itk]
-    # assert len(set([i.shape for i in volumes])) == 1, "Volumes are not the same size"
-
+    # correct orientation
     volume = sitk.GetArrayFromImage(volume)
+
+    # some preprocess to align the image
+    volume = volume.T
+    volume = np.flip(volume, axis=1)
+    volume = np.rot90(volume, 3, axes=(0, 2))
+
     r, c = volume[0].shape
 
     # Define frames
@@ -87,18 +97,42 @@ def show_volume(volume: sitk, entries: np.ndarray = None, targets: np.ndarray = 
         )
     )
 
-    # end of entries and targets -----------------------------------------
-
     # add line --------------------------------------------
-    for line in lines:
+    for pair in valid_entries_targets:
+        entry = pair[0]  # an array of 3 elements
+        target = pair[1]  # an array of 3 elements
+        line = {
+            "x": [entry[0], target[0]],
+            "y": [entry[1], target[1]],
+            "z": [entry[2], target[2]],
+        }
+        line = pandas.DataFrame(line)
         fig.add_trace(
             go.Scatter3d(
-                # extend the line to the end of the volume
-                x=line["x"],
-                y=line["y"],
-                z=line["z"],
+                x=line.x,
+                y=line.y,
+                z=line.z,
                 mode="lines",
-                line=dict(color="green", width=2),
+                line=dict(color="green", width=3),
+            )
+        )
+
+    # add verts and faces --------------------------------------------
+
+    # get a color plate for the mesh
+    colors = px.colors.qualitative.Plotly
+
+    for mesh in meshes:
+        fig.add_trace(
+            go.Mesh3d(
+                x=mesh["verts"][:, 0],
+                y=mesh["verts"][:, 1],
+                z=mesh["verts"][:, 2],
+                i=mesh["faces"][:, 0],
+                j=mesh["faces"][:, 1],
+                k=mesh["faces"][:, 2],
+                color=colors[meshes.index(mesh)],
+                opacity=0.5,
             )
         )
 
@@ -130,18 +164,6 @@ def show_volume(volume: sitk, entries: np.ndarray = None, targets: np.ndarray = 
         ),
         updatemenus=[
             {
-                "buttons": [
-                    {
-                        "args": [None, frame_args(50)],
-                        "label": "&#9654;",  # play symbol
-                        "method": "animate",
-                    },
-                    {
-                        "args": [[None], frame_args(0)],
-                        "label": "&#9724;",  # pause symbol
-                        "method": "animate",
-                    },
-                ],
                 "direction": "left",
                 "pad": {"r": 10, "t": 70},
                 "type": "buttons",
