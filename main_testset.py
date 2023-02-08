@@ -7,7 +7,7 @@ import SimpleITK as sitk
 from pathlib import Path
 import os
 from src.utils.show_volume import show_volume
-from src.utils.marching_cubes import marching_cubes, check_intersect, check_angle_of_intersection
+from src.utils.marching_cubes import marching_cubes, check_intersect, check_angle_of_intersection, check_distance_intersection
 import numpy as np
 from src.modules.fcsv import FCSV
 from src.utils.linear import point_to_numpy_idx
@@ -19,6 +19,7 @@ import multiprocessing as mp
 # read the entries and targets
 entires = FCSV(Path("week-2", "practicals", "entries.fcsv"))
 targets = FCSV(Path("week-2", "practicals", "targets.fcsv"))
+
 entries_coords = entires.content_df[["x", "y", "z"]].to_numpy()
 targets_coords = targets.content_df[["x", "y", "z"]].to_numpy()
 
@@ -45,12 +46,19 @@ for i in images_array.keys():
 
 # convert real-world coordinates to numpy indices
 entries_coords_idx_unrounded = [point_to_numpy_idx(i, list(images_itk.values())[0]) for i in entries_coords]
-entries_coords_idx_unrounded = np.array(entries_coords_idx_unrounded)
+entries_coords_idx_unrounded_array = np.array(entries_coords_idx_unrounded)
 targets_coords_idx_unrounded = [point_to_numpy_idx(i, list(images_itk.values())[0]) for i in targets_coords]
-targets_coords_idx_unrounded = np.array(targets_coords_idx_unrounded)
+targets_coords_idx_unrounded_array = np.array(targets_coords_idx_unrounded)
 
-entries_targets_combs = list(product(entries_coords_idx_unrounded, targets_coords_idx_unrounded))
-# entries_targets_combs = entries_targets_combs[:100]
+# make a column of entries and targets np index for the entries and targets in content_df
+entires.content_df["idx"] = [tuple(i) for i in entries_coords_idx_unrounded]
+targets.content_df["idx"] = [tuple(i) for i in targets_coords_idx_unrounded]
+
+entries_dict = {i: j for i, j in zip(entires.content_df["idx"], entires.content_df["id"])}
+targets_dict = {i: j for i, j in zip(targets.content_df["idx"], targets.content_df["id"])}
+
+entries_targets_combs = list(product(entries_coords_idx_unrounded_array, targets_coords_idx_unrounded_array))
+# entries_targets_combs = entries_targets_combs[:5000]
 
 
 def check_validity(entry_target_tuple):
@@ -83,10 +91,15 @@ def check_validity(entry_target_tuple):
     ) > (90 - 55):
         return False
 
+    # if check_distance_intersection(  # to be implemented; note that the distance is on the numpy indices
+    #     entry, target, verts=images_meshes["r_hippoTest.nii.gz"]["verts"], faces=images_meshes["r_hippoTest.nii.gz"]["faces"]
+    # ) > threshold:
+    #     return False
+
     return True
 
 
-if __name__ == "__main__":
+def main():
     # print image dimensions
     print("Image dimensions:")
     [print(i.GetSize()) for i in images_itk.values()]
@@ -100,22 +113,30 @@ if __name__ == "__main__":
         )
 
     # map to entries_targets_combs using the bool list as a mask using multiple processes
-    entries_targets_combs = [i for i, j in zip(entries_targets_combs, entries_targets_combs_bool) if j]
-
-    print(f"Number of valid entries-targets combinations: {len(entries_targets_combs)}")
+    entries_targets_combs_valid = [i for i, j in zip(entries_targets_combs, entries_targets_combs_bool) if j]
 
     # comment out the meshes you don't want to show
     meshes = [
-        images_meshes["r_hippo.nii.gz"],
-        # images_meshes["ventricles.nii.gz"],
-        # images_meshes["vessels.nii.gz"],
-        # images_meshes["cortex.nii.gz"],
+        images_meshes["r_hippoTest.nii.gz"],
+        # images_meshes["ventriclesTest.nii.gz"],
+        # images_meshes["vesselsTestDilate1.nii.gz"],
+        # images_meshes["r_cortexTest.nii.gz"],
     ]
 
     show_volume(
         images_itk["r_hippoTest.nii.gz"],
-        entries_coords_idx_unrounded,  # for point plotting
-        targets_coords_idx_unrounded,
-        valid_entries_targets=entries_targets_combs[:100],  # for line plotting; visualize only the first 100 to save time
+        entries_coords_idx_unrounded_array,  # for point plotting
+        targets_coords_idx_unrounded_array,
+        valid_entries_targets=entries_targets_combs_valid[:100],  # for line plotting; visualize only the first 100 to save time
         meshes=meshes,
     )
+
+    # convert the valid entries_targets_combs to a id using the entries and targets content_df
+    entries_targets_combs_valid_ids = [(entries_dict[tuple(i)], targets_dict[tuple(j)]) for i, j in entries_targets_combs_valid]
+
+    return entries_targets_combs_valid_ids
+
+
+if __name__ == "__main__":
+    selected_entries_targets = main()
+    print(f"Number of valid entries and targets: {len(selected_entries_targets)}")

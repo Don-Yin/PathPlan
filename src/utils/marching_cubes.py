@@ -165,6 +165,35 @@ def check_angle_of_intersection(p1, p2, verts, faces):
     return False
 
 
+def check_distance_intersection(p1, p2, verts, faces):
+    d = p2 - p1
+    for face in faces:
+        e1 = verts[face[1]] - verts[face[0]].astype(np.float64)
+        e2 = verts[face[2]] - verts[face[0]].astype(np.float64)
+
+        h = np.cross(d, e2).astype(np.float64)
+        a = np.dot(e1, h)
+
+        if a > -1e-10 and a < 1e-10:
+            continue
+        f = 1.0 / a
+        s = p1 - verts[face[0]]
+        u = f * np.dot(s, h)
+        if u < 0.0 or u > 1.0:
+            continue
+        q = np.cross(s, e1)
+        v = f * np.dot(d, q)
+        if v < 0.0 or u + v > 1.0:
+            continue
+        t = f * np.dot(e2, q)
+        # if t > 1e-10: # ray intersection
+        if t > 1e-10 and t < 1:  # between the two points
+            intersection = p1 + t * d
+            distance = np.linalg.norm(p1 - intersection)
+            return distance
+    return False
+
+
 @njit()
 def check_intersect(p1, p2, verts, faces):
     """

@@ -1,5 +1,3 @@
-# Import data
-import time
 import numpy as np
 import plotly.graph_objects as go
 from skimage import io

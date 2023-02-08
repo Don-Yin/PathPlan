@@ -19,3 +19,15 @@ For unittest, run ```python test.py```
 ## Requirements
 This code was written using Python 3.9.10. It also requires the libraries in requirements.txt
 ```pip install -r requirements.txt```
+
+## What has been done
+[x] This algorithm should take in a set of straight trajectories, represented as a pair of 3D Slicer Annotations (3D points), and two binary image volumes representing the critical structures and target structure. 
+[x] It should return a single 3D Slicer Annotation representing the selected final trajectory(entry and target point). 
+[x] To select the final trajectory the algorithm should select trajectories that meet the following hard constraints 
+    [x] (a) avoidance of a critical structure
+    [x] (b) placement of the tool into a target structure
+    [x] (c) ensuring the trajectory is below a certain length. (unittested but commented out as the threshold is not specified)
+[] The algorithm should then select an optimal trajectory based on maximizing distance to the critical structure. (not done)
+
+## Visual
+[Dash](assets/demo.png)
