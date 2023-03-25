@@ -29,3 +29,46 @@
 
 # Task 4. 
     Based on the Task 3 identify the order of operations each test should run, provide a justification based on theoretical and practical (time and search space reduction) considerations. Implement the end-to-end algorithm; report on the final runtime performance. Note this should be faster than the summative test in Task 3.
+
+
+
+
+---
+
+
+
+Rapid development of dashboard for data science
+I use python in all of my projects for different purposes: processing data, building dashboards, developing machine learning models as well as building pipelines. I am an expert in the object-oriented programming paradigm, unit testing and the use of standard libraries
+
+I use R regularly to solve any statistical challenges that I face during my research
+I use streamlit for building dashboards and interactive web apps for neural network model and data demonstration. I am very comfortable creating interactive dashboards for any type of data presentation.
+
+
+
+## Data Science
+R
+Dash
+Streamlit
+Research Statistics
+
+## Machine Learning
+Pytorch
+Advanced Python
+Computer Vision
+Medical Image Segmentation
+Distributed hyperparameter tuning
+Cloud computing
+Generative models
+
+## Frontend
+HTML
+CSS
+JavaScript
+React
+
+## Backend
+Flask and Django
+SQL
+MangoDB
+RESTful API
+SSH

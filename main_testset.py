@@ -7,7 +7,7 @@ import SimpleITK as sitk
 from pathlib import Path
 import os
 from src.utils.show_volume import show_volume
-from src.utils.marching_cubes import marching_cubes, check_intersect, check_angle_of_intersection, check_distance_intersection
+from src.utils.marching_cubes import marching_cubes, check_intersect, check_angle_of_intersection
 import numpy as np
 from src.modules.fcsv import FCSV
 from src.utils.linear import point_to_numpy_idx
@@ -118,9 +118,9 @@ def main():
     # comment out the meshes you don't want to show
     meshes = [
         images_meshes["r_hippoTest.nii.gz"],
-        # images_meshes["ventriclesTest.nii.gz"],
-        # images_meshes["vesselsTestDilate1.nii.gz"],
-        # images_meshes["r_cortexTest.nii.gz"],
+        images_meshes["ventriclesTest.nii.gz"],
+        images_meshes["vesselsTestDilate1.nii.gz"],
+        images_meshes["r_cortexTest.nii.gz"],
     ]
 
     show_volume(

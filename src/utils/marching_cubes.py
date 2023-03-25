@@ -5,6 +5,11 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from skimage import measure
 from numba import njit
 
+import warnings
+
+# Filter out warnings with a 'UserWarning' category
+warnings.filterwarnings("ignore", category=UserWarning)
+
 
 def marching_cubes(volume: np.ndarray, level: float = 0.5, visualize=False, lines: list = None):
     """Generates a 3D mesh using the Marching Cubes algorithm.
@@ -62,46 +67,54 @@ def marching_cubes(volume: np.ndarray, level: float = 0.5, visualize=False, line
 
 
 @njit()
-def ray_triangle_intersection(p, d, verts, face):
+def ray_triangle_intersection(origin, direction, vertices, triangle, distance=False):
     """
-    Check if a ray intersects with a triangle.
+    Check if a ray intersects with a triangle and optionally return the distance.
 
     Parameters
     ----------
-    p : np.ndarray
+    origin : np.ndarray
         The origin of the ray.
-    d : np.ndarray
+    direction : np.ndarray
         The direction of the ray.
-    verts : np.ndarray
+    vertices : np.ndarray
         An array of vertices.
-    face : np.ndarray
+    triangle : np.ndarray
         A triangle defined by three vertex indices.
+    distance : bool, optional
+        If True, return the distance of the intersection. Default is False.
 
     Returns
     -------
-    bool
-        True if the ray intersects with the triangle.
+    bool, float (if distance=True)
+        True and the distance if the ray intersects with the triangle and distance=True,
+        False otherwise.
     """
-    e1 = verts[face[1]] - verts[face[0]].astype(np.float64)
-    e2 = verts[face[2]] - verts[face[0]].astype(np.float64)
+    edge1 = vertices[triangle[1]] - vertices[triangle[0]].astype(np.float64)
+    edge2 = vertices[triangle[2]] - vertices[triangle[0]].astype(np.float64)
 
-    h = np.cross(d, e2).astype(np.float64)
-    a = np.dot(e1, h)
+    cross_product = np.cross(direction, edge2).astype(np.float64)
+    det = np.dot(edge1, cross_product)
 
-    if a > -1e-10 and a < 1e-10:
+    if -1e-10 < det < 1e-10:
         return False
-    f = 1.0 / a
-    s = p - verts[face[0]]
-    u = f * np.dot(s, h)
+
+    inv_det = 1.0 / det
+    diff = origin - vertices[triangle[0]]
+    u = inv_det * np.dot(diff.astype(np.float64), cross_product)
+
     if u < 0.0 or u > 1.0:
         return False
-    q = np.cross(s, e1)
-    v = f * np.dot(d, q)
+
+    cross_product2 = np.cross(diff, edge1)
+    v = inv_det * np.dot(direction.astype(np.float64), cross_product2)
+
     if v < 0.0 or u + v > 1.0:
         return False
-    t = f * np.dot(e2, q)
-    # if t > 1e-10: # ray intersection
-    if t > 1e-10 and t < 1:  # between the two points
+
+    t = inv_det * np.dot(edge2, cross_product2)
+
+    if 1e-10 < t < 1:  # between the two points
         return True
     else:
         return False
@@ -165,36 +178,7 @@ def check_angle_of_intersection(p1, p2, verts, faces):
     return False
 
 
-def check_distance_intersection(p1, p2, verts, faces):
-    d = p2 - p1
-    for face in faces:
-        e1 = verts[face[1]] - verts[face[0]].astype(np.float64)
-        e2 = verts[face[2]] - verts[face[0]].astype(np.float64)
-
-        h = np.cross(d, e2).astype(np.float64)
-        a = np.dot(e1, h)
-
-        if a > -1e-10 and a < 1e-10:
-            continue
-        f = 1.0 / a
-        s = p1 - verts[face[0]]
-        u = f * np.dot(s, h)
-        if u < 0.0 or u > 1.0:
-            continue
-        q = np.cross(s, e1)
-        v = f * np.dot(d, q)
-        if v < 0.0 or u + v > 1.0:
-            continue
-        t = f * np.dot(e2, q)
-        # if t > 1e-10: # ray intersection
-        if t > 1e-10 and t < 1:  # between the two points
-            intersection = p1 + t * d
-            distance = np.linalg.norm(p1 - intersection)
-            return distance
-    return False
-
-
-@njit()
+# @njit()
 def check_intersect(p1, p2, verts, faces):
     """
     Check if a line intersects with a triangle surface.

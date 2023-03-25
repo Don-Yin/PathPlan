@@ -7,7 +7,7 @@ import SimpleITK as sitk
 from pathlib import Path
 import os
 from src.utils.show_volume import show_volume
-from src.utils.marching_cubes import marching_cubes, check_intersect, check_angle_of_intersection, check_distance_intersection
+from src.utils.marching_cubes import marching_cubes, check_intersect, check_angle_of_intersection
 import numpy as np
 from src.modules.fcsv import FCSV
 from src.utils.linear import point_to_numpy_idx
@@ -90,11 +90,6 @@ def check_validity(entry_target_tuple):
         entry, target, verts=images_meshes["cortex.nii.gz"]["verts"], faces=images_meshes["cortex.nii.gz"]["faces"]
     ) > (90 - 55):
         return False
-
-    # if check_distance_intersection(  # to be implemented; note that the distance is on the numpy indices
-    #     entry, target, verts=images_meshes["r_hippoTest.nii.gz"]["verts"], faces=images_meshes["r_hippoTest.nii.gz"]["faces"]
-    # ) > threshold:
-    #     return False
 
     return True
 
